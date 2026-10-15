@@ -125,7 +125,6 @@ class Collector : public webm::Callback {
 	    const webm::SimpleBlock &b, webm::Action *action) override
 	{
 		begin_block(b, action);
-		key_ = b.is_key_frame;
 		return webm::Status(webm::Status::kOkCompleted);
 	}
 
@@ -312,7 +311,6 @@ class Collector : public webm::Callback {
 	uint64_t total_bytes_ = 0;
 	uint64_t last_frame_pos_ = 0;
 	bool active_ = false;
-	bool key_ = false;
 	std::vector<std::vector<uint8_t>> frames_;
 	std::vector<int64_t> pts_;
 	std::vector<uint64_t> durs_;

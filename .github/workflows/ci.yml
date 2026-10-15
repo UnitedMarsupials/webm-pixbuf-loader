@@ -12,7 +12,11 @@
 # ("Summary") lays every job's outcomes out as one table at the top of the
 # run's page.  CodeQL is a workflow of its own (codeql.yml).
 #
-# Linux runs natively on the runner.  FreeBSD runs in a VM on a Linux runner,
+# Linux runs natively on the runner: x86_64 with gcc and clang, aarch64 on
+# GitHub's ARM runner, and i386 -- 32-bit, so size_t and pointers are narrower
+# than the file's 64-bit sizes -- built with gcc -m32 against Ubuntu's i386
+# multiarch packages on the x86_64 runner, which runs the result as is.
+# FreeBSD runs in a VM on a Linux runner,
 # through cross-platform-actions; every step after the one that boots the VM
 # runs inside it (shell: cpa.sh).  The BSDs are experimental: their failures
 # are shown but do not fail the workflow.
@@ -33,18 +37,33 @@ concurrency:
 
 jobs:
   linux:
-    name: Ubuntu 24.04 (${{ matrix.cc }})
-    runs-on: ubuntu-24.04
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          - cc: gcc
+          - name: Ubuntu 24.04 (gcc)
+            runner: ubuntu-24.04
+            cc: gcc
             cxx: g++
             packages: gcc g++
-          - cc: clang
+          - name: Ubuntu 24.04 (clang)
+            runner: ubuntu-24.04
+            cc: clang
             cxx: clang++
             packages: clang
+          - name: Ubuntu 24.04 aarch64 (gcc)
+            runner: ubuntu-24.04-arm
+            cc: gcc
+            cxx: g++
+            packages: gcc g++
+          - name: Ubuntu 24.04 i386 (gcc)
+            runner: ubuntu-24.04
+            arch: i386
+            cc: gcc -m32
+            cxx: g++ -m32
+            packages: gcc-multilib g++-multilib
     env:
       CC: ${{ matrix.cc }}
       CXX: ${{ matrix.cxx }}
@@ -53,13 +72,26 @@ jobs:
         with:
           persist-credentials: false
 
+      # For a foreign ARCH the libraries come from Ubuntu's multiarch
+      # packages, and pkg-config must see only their .pc files; libwebm is
+      # built with the same CC and CXX, so it is for ARCH too.
       - name: Install dependencies
         id: install
+        env:
+          ARCH: ${{ matrix.arch }}
         run: |
+          if [ -n "$ARCH" ]; then
+              sudo dpkg --add-architecture "$ARCH"
+              lib=/usr/lib/$(dpkg-architecture -a "$ARCH" \
+                  -q DEB_HOST_MULTIARCH 2>/dev/null)
+              echo "PKG_CONFIG_LIBDIR=$lib/pkgconfig:/usr/share/pkgconfig" \
+                  >> "$GITHUB_ENV"
+              ARCH=:$ARCH
+          fi
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
               meson ninja-build cmake pkg-config git \
-              libgdk-pixbuf-2.0-dev libvpx-dev libdav1d-dev \
+              libgdk-pixbuf-2.0-dev$ARCH libvpx-dev$ARCH libdav1d-dev$ARCH \
               ${{ matrix.packages }}
           sh .github/annotate.sh Setup sh .github/build-libwebm.sh
 
@@ -86,7 +118,7 @@ jobs:
         if: always()
         env:
           ORDER: 0${{ strategy.job-index }}
-          NAME: Ubuntu 24.04 (${{ matrix.cc }})
+          NAME: ${{ matrix.name }}
           SETUP: ${{ steps.install.outcome }}
           CONFIGURE: ${{ steps.configure.outcome }}
           BUILD: ${{ steps.build.outcome }}

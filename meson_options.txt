@@ -1,0 +1,10 @@
+option('vpx', type: 'feature', value: 'auto',
+  description: 'VP8/VP9 decoding through libvpx')
+option('dav1d', type: 'feature', value: 'auto',
+  description: 'AV1 decoding through dav1d')
+option('gdk_pixbuf_moduledir', type: 'string', value: '',
+  description: 'Where to install the loader (default: from gdk-pixbuf)')
+option('update_cache', type: 'boolean', value: true,
+  description: 'Run gdk-pixbuf-query-loaders --update-cache after install')
+option('tests', type: 'feature', value: 'auto',
+  description: 'Build and run the tests (needs the sample files)')

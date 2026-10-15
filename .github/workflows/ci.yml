@@ -137,13 +137,25 @@ jobs:
               gdk-pixbuf2 libvpx dav1d
           sh .github/annotate.sh Setup sh .github/build-libwebm.sh
 
+      # The packaged dependencies carry their paths in their pkg-config files,
+      # but libwebm has none and lands under /usr/local, which the FreeBSD
+      # compiler and linker do not search by themselves (only the run-time
+      # linker does).  As nothing from the runner reaches the VM except
+      # through the command line, `env` sets CPATH/LIBRARY_PATH so meson's
+      # find_library('webm') and the loader's link find it.
       - name: Configure
         id: configure
-        run: sh .github/annotate.sh Configure meson setup build
+        run: >-
+          sh .github/annotate.sh Configure
+          env CPATH=/usr/local/include LIBRARY_PATH=/usr/local/lib
+          meson setup build
 
       - name: Build
         id: build
-        run: sh .github/annotate.sh Build meson compile -C build
+        run: >-
+          sh .github/annotate.sh Build
+          env CPATH=/usr/local/include LIBRARY_PATH=/usr/local/lib
+          meson compile -C build
 
       - name: Test
         id: test

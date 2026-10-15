@@ -256,6 +256,8 @@ Player::decode_frame(size_t f)
 	const Picture *pic = nullptr;
 	std::string err;
 
+	// A frame without its own alpha is opaque.
+	have_alpha_ = false;
 	for (size_t k = 0; k < fr.n_packets; k++) {
 		const Packet &pk = s_->packets[fr.first_packet + k];
 

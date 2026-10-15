@@ -114,8 +114,8 @@ webm_load_increment(gpointer data, const guchar *buf, guint size,
 	 * gdk_pixbuf_get_file_info() does not have to read the whole file.
 	 * Probe again only when the amount of data has doubled.
 	 */
-	if (ctx->size_known || ctx->data->len < ctx->next_probe
-	    || ctx->data->len > WEBM_MAX_PROBE)
+	if (ctx->size_known || ctx->data->len < ctx->next_probe ||
+	    ctx->data->len > WEBM_MAX_PROBE)
 		return (TRUE);
 	r = webmpb::Player::probe(ctx->data->data, ctx->data->len, &w, &h,
 	    error);
@@ -145,8 +145,8 @@ webm_stop_load(gpointer data, GError **error)
 	player = webmpb::Player::open(ctx->data->data, ctx->data->len, error);
 	if (player == NULL)
 		goto out;
-	if (!ctx->size_known
-	    && !report_size(ctx, player->width(), player->height())) {
+	if (!ctx->size_known &&
+	    !report_size(ctx, player->width(), player->height())) {
 		delete player;
 		ok = TRUE;
 		goto out;
@@ -220,8 +220,9 @@ extern "C" G_MODULE_EXPORT void
 fill_info(GdkPixbufFormat *info)
 {
 	/* The EBML magic; Matroska files share it and are rejected later. */
-	static GdkPixbufModulePattern signature[]
-	    = { { (char *)"\x1a\x45\xdf\xa3", NULL, 100 }, { NULL, NULL, 0 } };
+	static GdkPixbufModulePattern signature[] = {
+		{ (char *)"\x1a\x45\xdf\xa3", NULL, 100 }, { NULL, NULL, 0 }
+	};
 	static gchar *mime_types[] = { (gchar *)"video/webm", NULL };
 	static gchar *extensions[] = { (gchar *)"webm", NULL };
 

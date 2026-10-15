@@ -21,38 +21,34 @@ namespace webmpb {
 // valid until the next call to decode() or reset().
 struct Picture {
 	int width = 0, height = 0;
-	int bit_depth = 8; // 8, 10 or 12
-	bool wide = false; // samples are 16 bit
+	int bit_depth = 8;  // 8, 10 or 12
+	bool wide = false;  // samples are 16 bit
 	int xs = 1, ys = 1; // log2 chroma subsampling
-	bool mono = false; // no chroma planes
+	bool mono = false;  // no chroma planes
 	const uint8_t *plane[3] = { nullptr, nullptr, nullptr };
 	ptrdiff_t stride[3] = { 0, 0, 0 }; // bytes
 	int matrix = 2; // Matroska/ISO 23091-2 numbering, 2 == unspecified
-	int range = 0; // 0 unspecified, 1 limited, 2 full
+	int range = 0;	// 0 unspecified, 1 limited, 2 full
 };
 
 class Decoder {
-public:
+    public:
 	virtual ~Decoder() = default;
 
 	// Decode one packet.  On success *pic is the picture that became
 	// visible or nullptr if the packet did not produce one.
-	virtual bool
-	decode(const uint8_t *data, size_t size, const Picture **pic,
-	    std::string *error) = 0;
+	virtual bool decode(const uint8_t *data, size_t size,
+	    const Picture **pic, std::string *error) = 0;
 
 	// Forget all reference state; the next packet must be a keyframe.
-	virtual bool
-	reset(std::string *error) = 0;
+	virtual bool reset(std::string *error) = 0;
 };
 
 // Whether support for the codec was compiled in.
-bool
-codec_supported(Codec codec);
+bool codec_supported(Codec codec);
 
-std::unique_ptr<Decoder>
-make_decoder(Codec codec, const std::vector<uint8_t> &codec_private,
-    std::string *error);
+std::unique_ptr<Decoder> make_decoder(Codec codec,
+    const std::vector<uint8_t> &codec_private, std::string *error);
 
 } // namespace webmpb
 

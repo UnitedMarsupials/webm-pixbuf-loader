@@ -37,14 +37,14 @@ static const struct sample samples[] = {
 
 static int failures;
 
-#define CHECK(cond, ...)                                                       \
-	do {                                                                   \
-		if (!(cond)) {                                                 \
-			failures++;                                            \
-			fprintf(stderr, "FAIL %s:%d: ", __FILE__, __LINE__);   \
-			fprintf(stderr, __VA_ARGS__);                          \
-			fprintf(stderr, "\n");                                 \
-		}                                                              \
+#define CHECK(cond, ...)                                                     \
+	do {                                                                 \
+		if (!(cond)) {                                               \
+			failures++;                                          \
+			fprintf(stderr, "FAIL %s:%d: ", __FILE__, __LINE__); \
+			fprintf(stderr, __VA_ARGS__);                        \
+			fprintf(stderr, "\n");                               \
+		}                                                            \
 	} while (0)
 
 static gboolean
@@ -62,8 +62,9 @@ is_color(GdkPixbuf *pixbuf, int r, int g, int b)
 
 	x = gdk_pixbuf_get_width(pixbuf) / 2;
 	y = gdk_pixbuf_get_height(pixbuf) / 2;
-	p = gdk_pixbuf_get_pixels(pixbuf) + y * gdk_pixbuf_get_rowstride(pixbuf)
-	    + x * gdk_pixbuf_get_n_channels(pixbuf);
+	p = gdk_pixbuf_get_pixels(pixbuf) +
+	    y * gdk_pixbuf_get_rowstride(pixbuf) +
+	    x * gdk_pixbuf_get_n_channels(pixbuf);
 	if (!near(p[0], r) || !near(p[1], g) || !near(p[2], b)) {
 		fprintf(stderr, "  pixel is (%d, %d, %d), want (%d, %d, %d)\n",
 		    p[0], p[1], p[2], r, g, b);
@@ -80,8 +81,8 @@ alpha_of(GdkPixbuf *pixbuf)
 
 	x = gdk_pixbuf_get_width(pixbuf) / 2;
 	y = gdk_pixbuf_get_height(pixbuf) / 2;
-	p = gdk_pixbuf_get_pixels(pixbuf) + y * gdk_pixbuf_get_rowstride(pixbuf)
-	    + x * 4;
+	p = gdk_pixbuf_get_pixels(pixbuf) +
+	    y * gdk_pixbuf_get_rowstride(pixbuf) + x * 4;
 	return (p[3]);
 }
 
@@ -115,8 +116,8 @@ test_animation(const char *path, const struct sample *s)
 	}
 	CHECK(gdk_pixbuf_animation_is_static_image(anim) == s->still,
 	    "%s: static image mismatch", s->file);
-	CHECK(gdk_pixbuf_animation_get_width(anim) == 64
-		&& gdk_pixbuf_animation_get_height(anim) == 48,
+	CHECK(gdk_pixbuf_animation_get_width(anim) == 64 &&
+		gdk_pixbuf_animation_get_height(anim) == 48,
 	    "%s: animation size", s->file);
 	if (!s->still) {
 		g_get_current_time(&start);
@@ -158,10 +159,13 @@ test_sample(const char *dir, const struct sample *s)
 	/* Size and format without decoding anything. */
 	format = gdk_pixbuf_get_file_info(path, &w, &h);
 	CHECK(format != NULL, "%s: format not recognised", s->file);
-	if (format != NULL)
-		CHECK(strcmp(gdk_pixbuf_format_get_name(format), "webm") == 0,
-		    "%s: format is %s", s->file,
-		    gdk_pixbuf_format_get_name(format));
+	if (format != NULL) {
+		char *name = gdk_pixbuf_format_get_name(format);
+
+		CHECK(strcmp(name, "webm") == 0, "%s: format is %s", s->file,
+		    name);
+		g_free(name);
+	}
 	CHECK(w == 64 && h == 48, "%s: file info says %dx%d", s->file, w, h);
 
 	/* The first frame as a plain picture. */
@@ -169,8 +173,8 @@ test_sample(const char *dir, const struct sample *s)
 	CHECK(pixbuf != NULL, "%s: load: %s", s->file,
 	    error != NULL ? error->message : "?");
 	if (pixbuf != NULL) {
-		CHECK(gdk_pixbuf_get_width(pixbuf) == 64
-			&& gdk_pixbuf_get_height(pixbuf) == 48,
+		CHECK(gdk_pixbuf_get_width(pixbuf) == 64 &&
+			gdk_pixbuf_get_height(pixbuf) == 48,
 		    "%s: size", s->file);
 		CHECK(gdk_pixbuf_get_has_alpha(pixbuf) == s->alpha,
 		    "%s: alpha channel mismatch", s->file);
@@ -187,8 +191,8 @@ test_sample(const char *dir, const struct sample *s)
 	pixbuf = gdk_pixbuf_new_from_file_at_size(path, 32, 24, &error);
 	CHECK(pixbuf != NULL, "%s: scaled load failed", s->file);
 	if (pixbuf != NULL) {
-		CHECK(gdk_pixbuf_get_width(pixbuf) == 32
-			&& gdk_pixbuf_get_height(pixbuf) == 24,
+		CHECK(gdk_pixbuf_get_width(pixbuf) == 32 &&
+			gdk_pixbuf_get_height(pixbuf) == 24,
 		    "%s: scaled size is %dx%d", s->file,
 		    gdk_pixbuf_get_width(pixbuf),
 		    gdk_pixbuf_get_height(pixbuf));

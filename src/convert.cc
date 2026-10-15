@@ -2,20 +2,20 @@
 //
 // Copyright (c) 2026 Mikhail Teterin
 
-#include "convert.h"
-
 #include <algorithm>
 #include <vector>
+
+#include "convert.h"
 
 namespace webmpb {
 
 namespace {
 
 struct Coefs {
-	int y_off; // subtracted from luma
-	int y_scale; // 16.16
-	int rv, bu; // chroma -> R, B (16.16)
-	int gu, gv; // chroma -> G (16.16)
+	int y_off;     // subtracted from luma
+	int y_scale;   // 16.16
+	int rv, bu;    // chroma -> R, B (16.16)
+	int gu, gv;    // chroma -> G (16.16)
 	bool identity; // GBR: G = Y, B = U, R = V
 };
 
@@ -85,8 +85,8 @@ void
 load_row(const uint8_t *base, ptrdiff_t stride, int row, int n, int shift,
     uint8_t *dst)
 {
-	const T *src
-	    = reinterpret_cast<const T *>(base + (ptrdiff_t)row * stride);
+	const T *src = reinterpret_cast<const T *>(
+	    base + (ptrdiff_t)row * stride);
 	if (shift == 0) {
 		for (int i = 0; i < n; i++)
 			dst[i] = (uint8_t)src[i];
@@ -165,14 +165,14 @@ convert_to_rgb(const Picture &p, int matrix, int range, const Picture *alpha,
 				std::vector<uint8_t> t(w);
 				upsample_h(uraw2.data(), cw, w, p.xs, t.data());
 				for (int x = 0; x < w; x++)
-					urow[x]
-					    = (uint8_t)((3 * urow[x] + t[x] + 2)
-						>> 2);
+					urow[x] = (uint8_t)((3 * urow[x] +
+								t[x] + 2) >>
+					    2);
 				upsample_h(vraw2.data(), cw, w, p.xs, t.data());
 				for (int x = 0; x < w; x++)
-					vrow[x]
-					    = (uint8_t)((3 * vrow[x] + t[x] + 2)
-						>> 2);
+					vrow[x] = (uint8_t)((3 * vrow[x] +
+								t[x] + 2) >>
+					    2);
 			}
 		}
 
@@ -205,8 +205,8 @@ convert_to_rgb(const Picture &p, int matrix, int range, const Picture *alpha,
 				if (alpha) {
 					int ax = alpha->width == w ?
 					    x :
-					    (int)((int64_t)x * alpha->width
-						/ w);
+					    (int)((int64_t)x * alpha->width /
+						w);
 					o[3] = arow[ax];
 				} else {
 					o[3] = 255;

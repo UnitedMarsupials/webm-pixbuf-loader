@@ -19,13 +19,11 @@ namespace webmpb {
 // (see Picture) must be resolved, i.e. matrix != 2 and range != 0.  If
 // |alpha| is not null, the luma plane of that picture provides the alpha
 // channel (n_channels must be 4); otherwise alpha is opaque.
-void
-convert_to_rgb(const Picture &pic, int matrix, int range, const Picture *alpha,
-    uint8_t *out, size_t rowstride, int n_channels);
+void convert_to_rgb(const Picture &pic, int matrix, int range,
+    const Picture *alpha, uint8_t *out, size_t rowstride, int n_channels);
 
 // Pick a sensible matrix for streams that do not say.
-int
-default_matrix(int height);
+int default_matrix(int height);
 
 } // namespace webmpb
 

@@ -2,8 +2,6 @@
 //
 // Copyright (c) 2026 Mikhail Teterin
 
-#include "demux.h"
-
 #include <algorithm>
 #include <cstring>
 #include <memory>
@@ -12,12 +10,14 @@
 #include <webm/status.h>
 #include <webm/webm_parser.h>
 
+#include "demux.h"
+
 namespace webmpb {
 
 namespace {
 
 constexpr uint64_t kMaxTotalBytes = 512ull << 20; // of packet payload
-constexpr int kAbortHeadersDone = 1; // user status code
+constexpr int kAbortHeadersDone = 1;		  // user status code
 
 bool
 codec_from_id(const std::string &id, Codec *c)
@@ -34,7 +34,7 @@ codec_from_id(const std::string &id, Codec *c)
 }
 
 class Collector : public webm::Callback {
-public:
+    public:
 	Collector(Stream *out, bool headers_only)
 	    : out_(out)
 	    , headers_only_(headers_only)
@@ -46,38 +46,37 @@ public:
 	bool too_large = false;
 	bool saw_video_track = false;
 
-	webm::Status
-	OnEbml(const webm::ElementMetadata &, const webm::Ebml &ebml) override
+	webm::Status OnEbml(const webm::ElementMetadata &,
+	    const webm::Ebml &ebml) override
 	{
 		seen_ebml = true;
 		(void)ebml;
 		return webm::Status(webm::Status::kOkCompleted);
 	}
 
-	webm::Status
-	OnInfo(const webm::ElementMetadata &, const webm::Info &info) override
+	webm::Status OnInfo(const webm::ElementMetadata &,
+	    const webm::Info &info) override
 	{
 		uint64_t s = info.timecode_scale.value();
 		scale_ = s ? s : 1000000;
 		return webm::Status(webm::Status::kOkCompleted);
 	}
 
-	webm::Status
-	OnTrackEntry(const webm::ElementMetadata &,
+	webm::Status OnTrackEntry(const webm::ElementMetadata &,
 	    const webm::TrackEntry &t) override
 	{
-		if (have_track
-		    || t.track_type.value() != webm::TrackType::kVideo)
+		if (have_track ||
+		    t.track_type.value() != webm::TrackType::kVideo)
 			return webm::Status(webm::Status::kOkCompleted);
 		saw_video_track = true;
 		Codec c;
-		if (!codec_from_id(t.codec_id.value(), &c)
-		    || !t.video.is_present())
+		if (!codec_from_id(t.codec_id.value(), &c) ||
+		    !t.video.is_present())
 			return webm::Status(webm::Status::kOkCompleted);
 		// Content encodings (compression, encryption) are not
 		// supported.
-		if (t.content_encodings.is_present()
-		    && !t.content_encodings.value().encodings.empty())
+		if (t.content_encodings.is_present() &&
+		    !t.content_encodings.value().encodings.empty())
 			return webm::Status(webm::Status::kOkCompleted);
 
 		const webm::Video &v = t.video.value();
@@ -91,9 +90,9 @@ public:
 		out_->codec_private = t.codec_private.value();
 		out_->pixel_width = (uint32_t)w;
 		out_->pixel_height = (uint32_t)h;
-		if (v.display_unit.value() == webm::DisplayUnit::kPixels
-		    && v.display_width.is_present()
-		    && v.display_height.is_present()) {
+		if (v.display_unit.value() == webm::DisplayUnit::kPixels &&
+		    v.display_width.is_present() &&
+		    v.display_height.is_present()) {
 			uint64_t dw = v.display_width.value(),
 				 dh = v.display_height.value();
 			if (dw && dh && dw <= UINT32_MAX && dh <= UINT32_MAX) {
@@ -101,19 +100,18 @@ public:
 				out_->display_height = (uint32_t)dh;
 			}
 		}
-		out_->has_alpha
-		    = (c != Codec::AV1) && v.alpha_mode.value() == 1;
+		out_->has_alpha = (c != Codec::AV1) &&
+		    v.alpha_mode.value() == 1;
 		if (v.colour.is_present()) {
 			const webm::Colour &col = v.colour.value();
-			out_->color.matrix
-			    = (int)col.matrix_coefficients.value();
+			out_->color.matrix =
+			    (int)col.matrix_coefficients.value();
 			out_->color.range = (int)col.range.value();
 		}
 		return webm::Status(webm::Status::kOkCompleted);
 	}
 
-	webm::Status
-	OnClusterBegin(const webm::ElementMetadata &,
+	webm::Status OnClusterBegin(const webm::ElementMetadata &,
 	    const webm::Cluster &cluster, webm::Action *action) override
 	{
 		*action = webm::Action::kRead;
@@ -123,8 +121,7 @@ public:
 		return webm::Status(webm::Status::kOkCompleted);
 	}
 
-	webm::Status
-	OnSimpleBlockBegin(const webm::ElementMetadata &,
+	webm::Status OnSimpleBlockBegin(const webm::ElementMetadata &,
 	    const webm::SimpleBlock &b, webm::Action *action) override
 	{
 		begin_block(b, action);
@@ -132,8 +129,7 @@ public:
 		return webm::Status(webm::Status::kOkCompleted);
 	}
 
-	webm::Status
-	OnSimpleBlockEnd(const webm::ElementMetadata &,
+	webm::Status OnSimpleBlockEnd(const webm::ElementMetadata &,
 	    const webm::SimpleBlock &b) override
 	{
 		if (!active_)
@@ -142,24 +138,21 @@ public:
 		return finish_block(b, b.is_key_frame, nullptr, 0);
 	}
 
-	webm::Status
-	OnBlockGroupBegin(const webm::ElementMetadata &,
+	webm::Status OnBlockGroupBegin(const webm::ElementMetadata &,
 	    webm::Action *action) override
 	{
 		*action = webm::Action::kRead;
 		return webm::Status(webm::Status::kOkCompleted);
 	}
 
-	webm::Status
-	OnBlockBegin(const webm::ElementMetadata &, const webm::Block &b,
-	    webm::Action *action) override
+	webm::Status OnBlockBegin(const webm::ElementMetadata &,
+	    const webm::Block &b, webm::Action *action) override
 	{
 		begin_block(b, action);
 		return webm::Status(webm::Status::kOkCompleted);
 	}
 
-	webm::Status
-	OnBlockGroupEnd(const webm::ElementMetadata &,
+	webm::Status OnBlockGroupEnd(const webm::ElementMetadata &,
 	    const webm::BlockGroup &g) override
 	{
 		if (!active_)
@@ -182,8 +175,7 @@ public:
 		return finish_block(g.block.value(), key, alpha, dur);
 	}
 
-	webm::Status
-	OnFrame(const webm::FrameMetadata &m, webm::Reader *reader,
+	webm::Status OnFrame(const webm::FrameMetadata &m, webm::Reader *reader,
 	    std::uint64_t *remaining) override
 	{
 		if (!active_) {
@@ -203,13 +195,13 @@ public:
 				return webm::Status(
 				    webm::Status::kNotEnoughMemory);
 			}
-			size_t chunk
-			    = (size_t)std::min<uint64_t>(*remaining, 1 << 16);
+			size_t chunk = (size_t)std::min<uint64_t>(*remaining,
+			    1 << 16);
 			size_t old = dst.size();
 			dst.resize(old + chunk);
 			uint64_t got = 0;
-			webm::Status s
-			    = reader->Read(chunk, dst.data() + old, &got);
+			webm::Status s = reader->Read(chunk, dst.data() + old,
+			    &got);
 			dst.resize(old + (size_t)got);
 			*remaining -= got;
 			if (!s.completed_ok())
@@ -220,10 +212,8 @@ public:
 		return webm::Status(webm::Status::kOkCompleted);
 	}
 
-private:
-	template <class B>
-	void
-	begin_block(const B &b, webm::Action *action)
+    private:
+	template <class B> void begin_block(const B &b, webm::Action *action)
 	{
 		frames_.clear();
 		active_ = have_track && b.track_number == track_;
@@ -231,14 +221,13 @@ private:
 		(void)b;
 	}
 
-	webm::Status
-	finish_block(const webm::Block &b, bool key,
+	webm::Status finish_block(const webm::Block &b, bool key,
 	    const std::vector<uint8_t> *alpha, uint64_t duration_units)
 	{
 		int64_t tc;
 		if (__builtin_add_overflow((int64_t)cluster_tc_,
-			(int64_t)b.timecode, &tc)
-		    || tc < 0 || tc > (int64_t)1 << 48)
+			(int64_t)b.timecode, &tc) ||
+		    tc < 0 || tc > (int64_t)1 << 48)
 			return webm::Status(webm::Status::kInvalidElementValue);
 		int64_t base_ns;
 		if (__builtin_mul_overflow(tc, (int64_t)scale_, &base_ns))
@@ -268,11 +257,10 @@ private:
 		return webm::Status(webm::Status::kOkCompleted);
 	}
 
-public:
+    public:
 	// Build out_->frames and the timeline once the file has been
 	// read.
-	void
-	finalize()
+	void finalize()
 	{
 		std::vector<Packet> &pk = out_->packets;
 		std::vector<int64_t> pts; // per frame
@@ -314,7 +302,7 @@ public:
 		out_->total_ns = t;
 	}
 
-private:
+    private:
 	Stream *out_;
 	bool headers_only_;
 	uint64_t scale_ = 1000000;

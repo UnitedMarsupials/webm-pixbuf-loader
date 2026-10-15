@@ -61,4 +61,5 @@ The tests load the files in `tests/data` through a private loaders cache;
 ## License
 
 BSD 2-clause; see [LICENSE.md](LICENSE.md).  Copyright (c) 2026 Mikhail
-Teterin.  Developers: please read [AGENTS.md](AGENTS.md) first.
+Teterin.  Developers: please read [AGENTS.md](AGENTS.md) first.  The code follows
+FreeBSD's [style(9)](https://man.freebsd.org/cgi/man.cgi?query=style&sektion=9).

@@ -37,8 +37,8 @@ set_error(GError **error, ParseResult r, const std::string &msg)
 bool
 size_ok(uint64_t w, uint64_t h)
 {
-	return (w > 0 && h > 0 && w <= WEBM_MAX_DIMENSION
-	    && h <= WEBM_MAX_DIMENSION && w * h <= WEBM_MAX_PIXELS);
+	return (w > 0 && h > 0 && w <= WEBM_MAX_DIMENSION &&
+	    h <= WEBM_MAX_DIMENSION && w * h <= WEBM_MAX_PIXELS);
 }
 
 } // namespace
@@ -235,8 +235,8 @@ Player::frame(size_t i)
 				g_object_unref(last_);
 			last_ = (GdkPixbuf *)g_object_ref(pb);
 		}
-		if (pb != nullptr && cache_[f] == nullptr
-		    && cache_bytes_ + frame_bytes() <= kCacheBudget) {
+		if (pb != nullptr && cache_[f] == nullptr &&
+		    cache_bytes_ + frame_bytes() <= kCacheBudget) {
 			cache_[f] = (GdkPixbuf *)g_object_ref(pb);
 			cache_bytes_ += frame_bytes();
 		}
@@ -267,8 +267,8 @@ Player::decode_frame(size_t f)
 			const Picture *ap = nullptr;
 
 			if (alpha_dec_->decode(pk.alpha.data(), pk.alpha.size(),
-				&ap, &err)
-			    && ap != nullptr)
+				&ap, &err) &&
+			    ap != nullptr)
 				copy_alpha(*ap);
 		}
 	}
@@ -329,8 +329,8 @@ Player::copy_alpha(const Picture &ap)
 		uint8_t *dst = &alpha_plane_[(size_t)y * ap.width];
 
 		if (ap.wide) {
-			const uint16_t *src = (const uint16_t *)(ap.plane[0]
-			    + y * ap.stride[0]);
+			const uint16_t *src = (const uint16_t *)(ap.plane[0] +
+			    y * ap.stride[0]);
 
 			for (int x = 0; x < ap.width; x++)
 				dst[x] = (uint8_t)(src[x] >> shift);

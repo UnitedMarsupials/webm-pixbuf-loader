@@ -20,7 +20,7 @@ enum class Codec { VP8, VP9, AV1 };
 // ISO/IEC 23091-2).  Only used when the bitstream does not say.
 struct ColorInfo {
 	int matrix = 2; // 2 == unspecified
-	int range = 0; // 0 unspecified, 1 limited ("broadcast"), 2 full
+	int range = 0;	// 0 unspecified, 1 limited ("broadcast"), 2 full
 };
 
 // One block frame as stored in the file.
@@ -56,8 +56,7 @@ struct Stream {
 
 // The size an application should expect for the image: DisplayWidth/Height
 // when given, otherwise the coded size.
-void
-stream_output_size(const Stream &s, uint32_t *w, uint32_t *h);
+void stream_output_size(const Stream &s, uint32_t *w, uint32_t *h);
 
 enum class ParseResult {
 	Ok,
@@ -69,13 +68,12 @@ enum class ParseResult {
 
 // Parse |data| completely.  Truncated files are accepted as long as at
 // least one frame is present.
-ParseResult
-demux(std::vector<uint8_t> data, Stream *out, std::string *error);
+ParseResult demux(std::vector<uint8_t> data, Stream *out, std::string *error);
 
 // Parse only up to the first Cluster; fills everything in Stream except
 // packets and frames.  Used to report the image size early.
-ParseResult
-demux_headers(std::vector<uint8_t> data, Stream *out, std::string *error);
+ParseResult demux_headers(std::vector<uint8_t> data, Stream *out,
+    std::string *error);
 
 } // namespace webmpb
 

@@ -1,4 +1,6 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
+// SPDX-License-Identifier: BSD-2-Clause
+//
+// Copyright (c) 2026 Mikhail Teterin
 //
 // Planar YUV (8-12 bit, 4:0:0 / 4:2:0 / 4:2:2 / 4:4:0 / 4:4:4) to RGB(A).
 

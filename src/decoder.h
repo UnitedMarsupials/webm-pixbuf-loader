@@ -1,4 +1,6 @@
-// SPDX-License-Identifier: LGPL-2.1-or-later
+// SPDX-License-Identifier: BSD-2-Clause
+//
+// Copyright (c) 2026 Mikhail Teterin
 //
 // Thin wrapper around libvpx (VP8/VP9) and dav1d (AV1).
 

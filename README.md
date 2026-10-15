@@ -1,8 +1,25 @@
 # webm-pixbuf-loader
 
-A [gdk-pixbuf](https://gitlab.gnome.org/GNOME/gdk-pixbuf) loader for WebM,
-so that GTK applications (Pidgin, image viewers, thumbnailers, ...) can show
-`.webm` files, such as Telegram's WebM stickers and custom emoji, as images.
+## Goal
+
+WebM is no longer just video: stickers, custom emoji, reactions and short
+loops in chat applications are WebM files, usually VP9 with an alpha
+channel.  GTK applications get their pictures through
+[gdk-pixbuf](https://gitlab.gnome.org/GNOME/gdk-pixbuf), which has no idea
+what to do with them.  This project is a gdk-pixbuf loader plugin that
+teaches it: any program that can show a PNG or a GIF through gdk-pixbuf
+(Pidgin, image viewers, file managers, thumbnailers, ...) can show a `.webm`
+file as an image, or as an animation, without knowing anything about video
+codecs.
+
+The immediate use is Pidgin, through tdlib-purple, showing Telegram's WebM
+stickers and custom emoji.  The goal is general, though: all the WebM video
+codecs (VP8, VP9 and AV1), alpha, animation, and sane behaviour on hostile
+input.
+
+Frames are demuxed with libwebm and decoded with libvpx and dav1d.
+
+## What it does
 
 * A one-frame file is a still picture; anything longer is an animation that
   loops forever. `gdk_pixbuf_new_from_file()` returns the first frame.
@@ -43,4 +60,5 @@ The tests load the files in `tests/data` through a private loaders cache;
 
 ## License
 
-LGPL-2.1-or-later, like gdk-pixbuf itself.
+BSD 2-clause; see [LICENSE.md](LICENSE.md).  Copyright (c) 2026 Mikhail
+Teterin.  Developers: please read [AGENTS.md](AGENTS.md) first.

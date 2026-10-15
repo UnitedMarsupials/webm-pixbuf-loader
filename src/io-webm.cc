@@ -1,4 +1,8 @@
-/* SPDX-License-Identifier: LGPL-2.1-or-later */
+/*
+ * SPDX-License-Identifier: BSD-2-Clause
+ *
+ * Copyright (c) 2026 Mikhail Teterin
+ */
 /*
  * gdk-pixbuf loader for WebM (VP8, VP9 and AV1 video).
  *
@@ -227,5 +231,5 @@ fill_info(GdkPixbufFormat *info)
 	info->mime_types = mime_types;
 	info->extensions = extensions;
 	info->flags = GDK_PIXBUF_FORMAT_THREADSAFE;
-	info->license = (gchar *)"LGPL";
+	info->license = (gchar *)"BSD";
 }

@@ -1,6 +1,6 @@
 project('webm-pixbuf-loader', ['c', 'cpp'],
   version: '0.1.0',
-  license: 'LGPL-2.1-or-later',
+  license: 'BSD-2-Clause',
   meson_version: '>=0.56',
   default_options: ['c_std=c11', 'cpp_std=c++14', 'warning_level=2'])
 

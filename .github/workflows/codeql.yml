@@ -33,6 +33,8 @@ jobs:
       security-events: write
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Install dependencies
         run: |
@@ -48,10 +50,13 @@ jobs:
           build-mode: manual
           config-file: ./.github/codeql/config.yml
 
+      # Build only the loader target: paths-ignore does not keep a compiled
+      # file out of the analysis, so the test driver is left out by not
+      # compiling it rather than by the config alone.
       - name: Build
         run: |
           meson setup build
-          meson compile -C build
+          meson compile -C build pixbufloader-webm
 
       - uses: github/codeql-action/analyze@v4
         with:

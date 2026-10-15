@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+#
+# CodeRabbit reviews pull requests automatically.  The GitHub App must be
+# installed on the repository (https://github.com/apps/coderabbitai) for this
+# file to take effect; it configures the app, it does not enable it.
+language: en-US
+reviews:
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  auto_review:
+    enabled: true
+    drafts: false
+  # The sample clips are binary fixtures, not code to review.
+  path_filters:
+    - "!tests/data/**"
+  tools:
+    github-checks:
+      enabled: true
+chat:
+  auto_reply: true

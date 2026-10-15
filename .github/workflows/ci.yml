@@ -1,0 +1,212 @@
+# Build and test every push and every pull request.
+#
+# Setup, Configure, Build, Test and Install are separate steps in every job,
+# so a red mark names which one failed.  "Setup" installs the packaged
+# dependencies and builds libwebm (which no distribution packages).  "Test" is
+# `meson test`: the loader driven through the public gdk-pixbuf API against the
+# sample files in tests/data -- no network, nothing decoded that is not in the
+# tree.  "Install" is `meson install` into a scratch DESTDIR, which catches a
+# broken install rule.
+# .github/annotate.sh repeats the tail of a failing step's output as an
+# annotation, so the summary page says what broke, and the last job
+# ("Summary") lays every job's outcomes out as one table at the top of the
+# run's page.  CodeQL is a workflow of its own (codeql.yml).
+#
+# Linux runs natively on the runner.  FreeBSD runs in a VM on a Linux runner,
+# through cross-platform-actions; every step after the one that boots the VM
+# runs inside it (shell: cpa.sh).  The BSDs are experimental: their failures
+# are shown but do not fail the workflow.
+
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux:
+    name: Ubuntu 24.04 (${{ matrix.cc }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - cc: gcc
+            cxx: g++
+            packages: gcc g++
+          - cc: clang
+            cxx: clang++
+            packages: clang
+    env:
+      CC: ${{ matrix.cc }}
+      CXX: ${{ matrix.cxx }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Install dependencies
+        id: install
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+              meson ninja-build cmake pkg-config git \
+              libgdk-pixbuf-2.0-dev libvpx-dev libdav1d-dev \
+              ${{ matrix.packages }}
+          sh .github/annotate.sh Setup sh .github/build-libwebm.sh
+
+      - name: Configure
+        id: configure
+        run: sh .github/annotate.sh Configure meson setup build
+
+      - name: Build
+        id: build
+        run: sh .github/annotate.sh Build meson compile -C build
+
+      - name: Test
+        id: test
+        run: sh .github/annotate.sh Test meson test -C build --print-errorlogs
+
+      - name: Install
+        id: destdir
+        run: >-
+          sh .github/annotate.sh Install
+          env DESTDIR="$PWD/destdir" meson install -C build
+          && find destdir -type f
+
+      - name: Record outcome
+        if: always()
+        env:
+          ORDER: 0${{ strategy.job-index }}
+          NAME: Ubuntu 24.04 (${{ matrix.cc }})
+          SETUP: ${{ steps.install.outcome }}
+          CONFIGURE: ${{ steps.configure.outcome }}
+          BUILD: ${{ steps.build.outcome }}
+          TEST: ${{ steps.test.outcome }}
+          INSTALL: ${{ steps.destdir.outcome }}
+        run: sh .github/record.sh
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: outcome-${{ github.job }}-${{ strategy.job-index }}
+          path: outcome.tsv
+
+  bsd:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-24.04
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: FreeBSD 14.4 (experimental)
+            os: freebsd
+            version: '14.4'
+            experimental: true
+          - name: FreeBSD 15.1 (experimental)
+            os: freebsd
+            version: '15.1'
+            experimental: true
+    defaults:
+      run:
+        shell: cpa.sh {0}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Boot ${{ matrix.name }}
+        id: boot
+        uses: cross-platform-actions/action@v1.6.0
+        with:
+          operating_system: ${{ matrix.os }}
+          version: ${{ matrix.version }}
+
+      # gdk-pixbuf2, libvpx and dav1d come as packages; libwebm is built from
+      # source, like on Linux.  All land under /usr/local, which the toolchain
+      # searches by itself.
+      - name: Install dependencies
+        id: install
+        run: |
+          sudo pkg install -y meson ninja cmake pkgconf git \
+              gdk-pixbuf2 libvpx dav1d
+          sh .github/annotate.sh Setup sh .github/build-libwebm.sh
+
+      # The packaged dependencies carry their paths in their pkg-config files,
+      # but libwebm has none and lands under /usr/local, which the FreeBSD
+      # compiler and linker do not search by themselves (only the run-time
+      # linker does).  As nothing from the runner reaches the VM except
+      # through the command line, `env` sets CPATH/LIBRARY_PATH so meson's
+      # find_library('webm') and the loader's link find it.
+      - name: Configure
+        id: configure
+        run: >-
+          sh .github/annotate.sh Configure
+          env CPATH=/usr/local/include LIBRARY_PATH=/usr/local/lib
+          meson setup build
+
+      - name: Build
+        id: build
+        run: >-
+          sh .github/annotate.sh Build
+          env CPATH=/usr/local/include LIBRARY_PATH=/usr/local/lib
+          meson compile -C build
+
+      - name: Test
+        id: test
+        run: sh .github/annotate.sh Test meson test -C build --print-errorlogs
+
+      - name: Install
+        id: destdir
+        run: >-
+          sh .github/annotate.sh Install
+          env DESTDIR="$PWD/destdir" meson install -C build
+          && find destdir -type f
+
+      # On the runner, not in the VM: it may never have booted.
+      - name: Record outcome
+        if: always()
+        shell: bash
+        env:
+          ORDER: 1${{ strategy.job-index }}
+          NAME: ${{ matrix.name }}
+          SETUP: ${{ steps.boot.outcome }} ${{ steps.install.outcome }}
+          CONFIGURE: ${{ steps.configure.outcome }}
+          BUILD: ${{ steps.build.outcome }}
+          TEST: ${{ steps.test.outcome }}
+          INSTALL: ${{ steps.destdir.outcome }}
+        run: sh .github/record.sh
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: outcome-${{ github.job }}-${{ strategy.job-index }}
+          path: outcome.tsv
+
+  summary:
+    name: Summary
+    needs: [linux, bsd]
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: outcome-*
+          merge-multiple: false
+          path: outcomes
+
+      - name: Tabulate
+        run: sh .github/summary.sh outcomes >> "$GITHUB_STEP_SUMMARY"

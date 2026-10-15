@@ -1,0 +1,63 @@
+# CodeQL static analysis of the loader.  Its own workflow, apart from CI: it
+# is slower, and its findings land in the repository's Security tab rather
+# than failing a build.
+#
+# Build mode "manual": CodeQL traces a real meson build on Ubuntu, so it sees
+# the code as compiled, with gdk-pixbuf's, libvpx's, dav1d's and libwebm's
+# headers.  The sample files and the test driver are not analysed
+# (.github/codeql/config.yml).
+
+name: CodeQL
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '17 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze (C/C++)
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+              meson ninja-build cmake pkg-config git \
+              libgdk-pixbuf-2.0-dev libvpx-dev libdav1d-dev
+          sh .github/build-libwebm.sh
+
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: c-cpp
+          build-mode: manual
+          config-file: ./.github/codeql/config.yml
+
+      # Build only the loader target: paths-ignore does not keep a compiled
+      # file out of the analysis, so the test driver is left out by not
+      # compiling it rather than by the config alone.
+      - name: Build
+        run: |
+          meson setup build
+          meson compile -C build pixbufloader-webm
+
+      - uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:c-cpp

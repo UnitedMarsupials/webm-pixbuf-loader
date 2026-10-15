@@ -219,9 +219,15 @@ fill_vtable(GdkPixbufModule *module)
 extern "C" G_MODULE_EXPORT void
 fill_info(GdkPixbufFormat *info)
 {
-	/* The EBML magic; Matroska files share it and are rejected later. */
+	/*
+	 * The EBML DocType element "webm", found anywhere in the sniffed
+	 * bytes, so that other Matroska files are left to other loaders.
+	 * The bare EBML magic, with a low score, catches WebM files whose
+	 * DocType is not written in the usual shortest form.
+	 */
 	static GdkPixbufModulePattern signature[] = {
-		{ (char *)"\x1a\x45\xdf\xa3", NULL, 100 }, { NULL, NULL, 0 }
+		{ (char *)"*\x42\x82\x84webm", (char *)"*       ", 100 },
+		{ (char *)"\x1a\x45\xdf\xa3", NULL, 10 }, { NULL, NULL, 0 }
 	};
 	static gchar *mime_types[] = { (gchar *)"video/webm", NULL };
 	static gchar *extensions[] = { (gchar *)"webm", NULL };

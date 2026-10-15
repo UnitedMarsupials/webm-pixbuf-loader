@@ -31,6 +31,8 @@ static const struct sample samples[] = {
 	{ "vp9-444.webm", FALSE, FALSE },
 	{ "vp9-10bit.webm", FALSE, FALSE },
 	{ "av1.webm", FALSE, FALSE },
+	/* Sequence header only in CodecPrivate, not in the keyframes. */
+	{ "av1-noseq.webm", FALSE, FALSE },
 	{ "still.webm", TRUE, FALSE },
 	{ "alpha.webm", TRUE, TRUE },
 };
@@ -141,6 +143,45 @@ test_animation(const char *path, const struct sample *s)
 		    "%s: 1100 ms is not blue", s->file);
 		g_object_unref(iter);
 	}
+	g_object_unref(anim);
+}
+
+/*
+ * Half-transparent red for two frames, then opaque green without any
+ * BlockAdditional alpha: the alpha of the red frames must not stick.
+ */
+static void
+test_alpha_animation(const char *dir)
+{
+	GdkPixbufAnimation *anim;
+	GdkPixbufAnimationIter *iter;
+	GdkPixbuf *pixbuf;
+	GError *error = NULL;
+	GTimeVal start;
+	char *path;
+
+	path = g_build_filename(dir, "alpha-anim.webm", NULL);
+	anim = gdk_pixbuf_animation_new_from_file(path, &error);
+	CHECK(anim != NULL, "alpha-anim.webm: animation: %s",
+	    error != NULL ? error->message : "?");
+	g_clear_error(&error);
+	g_free(path);
+	if (anim == NULL)
+		return;
+	g_get_current_time(&start);
+	iter = gdk_pixbuf_animation_get_iter(anim, &start);
+	pixbuf = gdk_pixbuf_animation_iter_get_pixbuf(iter);
+	CHECK(gdk_pixbuf_get_has_alpha(pixbuf), "alpha-anim.webm: no alpha");
+	CHECK(is_color(pixbuf, 255, 0, 0) && near(alpha_of(pixbuf), 128),
+	    "alpha-anim.webm: 0 ms is not half-transparent red");
+	pixbuf = frame_at(iter, &start, 300);
+	CHECK(is_color(pixbuf, 0, 255, 0) && alpha_of(pixbuf) == 255,
+	    "alpha-anim.webm: 300 ms is not opaque green (alpha %d)",
+	    alpha_of(pixbuf));
+	pixbuf = frame_at(iter, &start, 100);
+	CHECK(is_color(pixbuf, 255, 0, 0) && near(alpha_of(pixbuf), 128),
+	    "alpha-anim.webm: back to 100 ms is not half-transparent red");
+	g_object_unref(iter);
 	g_object_unref(anim);
 }
 G_GNUC_END_IGNORE_DEPRECATIONS
@@ -313,6 +354,7 @@ main(int argc, char **argv)
 	}
 	for (i = 0; i < G_N_ELEMENTS(samples); i++)
 		test_sample(argv[1], &samples[i]);
+	test_alpha_animation(argv[1]);
 	test_chunked(argv[1]);
 	test_broken(argv[1]);
 	if (failures != 0)

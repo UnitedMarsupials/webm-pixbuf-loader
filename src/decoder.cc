@@ -164,21 +164,16 @@ class Dav1dDecoder : public Decoder {
 			*error = "Cannot initialise dav1d";
 			return false;
 		}
-		if (!config_.empty()) {
-			Dav1dPicture *dummy;
-			(void)dummy;
+		if (!config_.empty())
 			feed(config_.data(), config_.size(), nullptr);
-		}
 		return true;
 	}
 
+	// dav1d_flush() also forgets the sequence header, which may exist
+	// only in the configOBUs, so start from scratch like open() does.
 	bool reset(std::string *error) override
 	{
-		if (ctx_) {
-			release();
-			dav1d_flush(ctx_);
-			return true;
-		}
+		close();
 		return open(error);
 	}
 

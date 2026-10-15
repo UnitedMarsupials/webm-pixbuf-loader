@@ -2,10 +2,10 @@
 //
 // Copyright (c) 2026 Mikhail Teterin
 
-#include "decoder.h"
-
 #include <cerrno>
 #include <cstring>
+
+#include "decoder.h"
 
 #ifdef HAVE_VPX
 #include <vpx/vp8dx.h>
@@ -21,15 +21,14 @@ namespace webmpb {
 namespace {
 
 class VpxDecoder : public Decoder {
-public:
+    public:
 	explicit VpxDecoder(Codec c)
 	    : codec_(c)
 	{
 	}
 	~VpxDecoder() override { close(); }
 
-	bool
-	open(std::string *error)
+	bool open(std::string *error)
 	{
 		vpx_codec_iface_t *iface = codec_ == Codec::VP8 ?
 		    vpx_codec_vp8_dx() :
@@ -37,32 +36,30 @@ public:
 		vpx_codec_dec_cfg_t cfg = { };
 		cfg.threads = 1;
 		if (vpx_codec_dec_init(&ctx_, iface, &cfg, 0) != VPX_CODEC_OK) {
-			*error = std::string("Cannot initialise libvpx: ")
-			    + vpx_codec_error(&ctx_);
+			*error = std::string("Cannot initialise libvpx: ") +
+			    vpx_codec_error(&ctx_);
 			return false;
 		}
 		open_ = true;
 		return true;
 	}
 
-	bool
-	reset(std::string *error) override
+	bool reset(std::string *error) override
 	{
 		close();
 		return open(error);
 	}
 
-	bool
-	decode(const uint8_t *data, size_t size, const Picture **pic,
+	bool decode(const uint8_t *data, size_t size, const Picture **pic,
 	    std::string *error) override
 	{
 		*pic = nullptr;
 		if (!open_ && !open(error))
 			return false;
-		if (vpx_codec_decode(&ctx_, data, (unsigned)size, nullptr, 0)
-		    != VPX_CODEC_OK) {
-			*error = std::string("VPx decode error: ")
-			    + vpx_codec_error(&ctx_);
+		if (vpx_codec_decode(&ctx_, data, (unsigned)size, nullptr, 0) !=
+		    VPX_CODEC_OK) {
+			*error = std::string("VPx decode error: ") +
+			    vpx_codec_error(&ctx_);
 			return false;
 		}
 		vpx_codec_iter_t it = nullptr;
@@ -125,9 +122,8 @@ public:
 		return true;
 	}
 
-private:
-	void
-	close()
+    private:
+	void close()
 	{
 		if (open_)
 			vpx_codec_destroy(&ctx_);
@@ -146,7 +142,7 @@ private:
 namespace {
 
 class Dav1dDecoder : public Decoder {
-public:
+    public:
 	explicit Dav1dDecoder(const std::vector<uint8_t> &priv)
 	{
 		// av1C: 4 bytes of header, then optional configOBUs
@@ -156,8 +152,7 @@ public:
 	}
 	~Dav1dDecoder() override { close(); }
 
-	bool
-	open(std::string *error)
+	bool open(std::string *error)
 	{
 		Dav1dSettings s;
 		dav1d_default_settings(&s);
@@ -176,15 +171,13 @@ public:
 
 	// dav1d_flush() also forgets the sequence header, which may exist
 	// only in the configOBUs, so start from scratch like open() does.
-	bool
-	reset(std::string *error) override
+	bool reset(std::string *error) override
 	{
 		close();
 		return open(error);
 	}
 
-	bool
-	decode(const uint8_t *data, size_t size, const Picture **pic,
+	bool decode(const uint8_t *data, size_t size, const Picture **pic,
 	    std::string *error) override
 	{
 		*pic = nullptr;
@@ -236,16 +229,14 @@ public:
 		return true;
 	}
 
-private:
-	void
-	release()
+    private:
+	void release()
 	{
 		if (have_pic_)
 			dav1d_picture_unref(&pic_raw_);
 		have_pic_ = false;
 	}
-	void
-	close()
+	void close()
 	{
 		release();
 		if (ctx_)
@@ -254,8 +245,7 @@ private:
 	}
 
 	// Returns 1 if a picture was produced, 0 if not, -1 on error.
-	int
-	feed(const uint8_t *data, size_t size, Dav1dPicture *out)
+	int feed(const uint8_t *data, size_t size, Dav1dPicture *out)
 	{
 		Dav1dData d;
 		uint8_t *buf = dav1d_data_create(&d, size);

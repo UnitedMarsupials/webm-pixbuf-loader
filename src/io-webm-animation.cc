@@ -58,11 +58,11 @@ webm_animation_get_iter(GdkPixbufAnimation *animation,
 	WebmAnimation *anim = WEBM_ANIMATION(animation);
 	WebmAnimationIter *iter;
 
-	iter
-	    = (WebmAnimationIter *)g_object_new(WEBM_TYPE_ANIMATION_ITER, NULL);
+	iter = (WebmAnimationIter *)g_object_new(WEBM_TYPE_ANIMATION_ITER,
+	    NULL);
 	iter->anim = (WebmAnimation *)g_object_ref(anim);
-	iter->start_us
-	    = (gint64)start_time->tv_sec * G_USEC_PER_SEC + start_time->tv_usec;
+	iter->start_us = (gint64)start_time->tv_sec * G_USEC_PER_SEC +
+	    start_time->tv_usec;
 	iter->index = 0;
 	iter->pos_ns = 0;
 	iter->pixbuf = anim->player->frame(0);
@@ -144,8 +144,8 @@ webm_animation_iter_advance(GdkPixbufAnimationIter *anim_iter,
 	if (player->n_frames() == 1 || player->total_ns() <= 0)
 		return (FALSE);
 
-	now_us = (gint64)current_time->tv_sec * G_USEC_PER_SEC
-	    + current_time->tv_usec;
+	now_us = (gint64)current_time->tv_sec * G_USEC_PER_SEC +
+	    current_time->tv_usec;
 	elapsed_us = now_us - iter->start_us;
 	if (elapsed_us < 0) {
 		/* The system clock was probably set backwards. */
@@ -176,15 +176,15 @@ webm_animation_iter_class_init(WebmAnimationIterClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS(klass);
 	G_GNUC_BEGIN_IGNORE_DEPRECATIONS
-	GdkPixbufAnimationIterClass *iter_class
-	    = GDK_PIXBUF_ANIMATION_ITER_CLASS(klass);
+	GdkPixbufAnimationIterClass *iter_class =
+	    GDK_PIXBUF_ANIMATION_ITER_CLASS(klass);
 	G_GNUC_END_IGNORE_DEPRECATIONS
 
 	object_class->finalize = webm_animation_iter_finalize;
 	iter_class->get_delay_time = webm_animation_iter_get_delay_time;
 	iter_class->get_pixbuf = webm_animation_iter_get_pixbuf;
-	iter_class->on_currently_loading_frame
-	    = webm_animation_iter_on_currently_loading_frame;
+	iter_class->on_currently_loading_frame =
+	    webm_animation_iter_on_currently_loading_frame;
 	iter_class->advance = webm_animation_iter_advance;
 }
 

@@ -16,12 +16,12 @@
 #include "player.h"
 
 #define WEBM_TYPE_ANIMATION (webm_animation_get_type())
-#define WEBM_ANIMATION(o)                                                      \
+#define WEBM_ANIMATION(o) \
 	(G_TYPE_CHECK_INSTANCE_CAST((o), WEBM_TYPE_ANIMATION, WebmAnimation))
 
 #define WEBM_TYPE_ANIMATION_ITER (webm_animation_iter_get_type())
-#define WEBM_ANIMATION_ITER(o)                                                 \
-	(G_TYPE_CHECK_INSTANCE_CAST((o), WEBM_TYPE_ANIMATION_ITER,             \
+#define WEBM_ANIMATION_ITER(o)                                     \
+	(G_TYPE_CHECK_INSTANCE_CAST((o), WEBM_TYPE_ANIMATION_ITER, \
 	    WebmAnimationIter))
 
 typedef struct _WebmAnimation {
@@ -46,13 +46,10 @@ typedef struct _WebmAnimationIterClass {
 	GdkPixbufAnimationIterClass parent_class;
 } WebmAnimationIterClass;
 
-GType
-webm_animation_get_type(void);
-GType
-webm_animation_iter_get_type(void);
+GType webm_animation_get_type(void);
+GType webm_animation_iter_get_type(void);
 
 /* Takes ownership of the player. */
-GdkPixbufAnimation *
-webm_animation_new(webmpb::Player *player);
+GdkPixbufAnimation *webm_animation_new(webmpb::Player *player);
 
 #endif /* IO_WEBM_ANIMATION_H */

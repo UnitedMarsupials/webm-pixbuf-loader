@@ -21,6 +21,8 @@ if not cxx.has_header('webm/webm_parser.h')
   error('libwebm headers (webm/webm_parser.h) not found')
 endif
 
+# Both decoders are optional for now, but are expected to become mandatory:
+# nobody who wants WebM in gdk-pixbuf wants only some of the codecs.
 vpx = dependency('vpx', required: get_option('vpx'))
 dav1d = dependency('dav1d', required: get_option('dav1d'))
 if not vpx.found() and not dav1d.found()

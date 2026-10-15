@@ -1,7 +1,7 @@
 option('vpx', type: 'feature', value: 'auto',
-  description: 'VP8/VP9 decoding through libvpx')
+  description: 'VP8/VP9 decoding through libvpx (to become mandatory)')
 option('dav1d', type: 'feature', value: 'auto',
-  description: 'AV1 decoding through dav1d')
+  description: 'AV1 decoding through dav1d (to become mandatory)')
 option('gdk_pixbuf_moduledir', type: 'string', value: '',
   description: 'Where to install the loader (default: from gdk-pixbuf)')
 option('update_cache', type: 'boolean', value: true,

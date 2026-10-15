@@ -7,7 +7,9 @@ so that GTK applications (Pidgin, image viewers, thumbnailers, ...) can show
 * A one-frame file is a still picture; anything longer is an animation that
   loops forever. `gdk_pixbuf_new_from_file()` returns the first frame.
 * Codecs: VP8 and VP9 through libvpx, AV1 through dav1d. Either can be
-  disabled at build time (`-Dvpx=disabled`, `-Ddav1d=disabled`).
+  disabled at build time (`-Dvpx=disabled`, `-Ddav1d=disabled`), but this is
+  only transitional: both are expected to become mandatory, so packagers
+  should depend on both.
 * VP8/VP9 with alpha (the `BlockAdditional` side channel) gives RGBA.
 * 8, 10 and 12 bit samples; 4:0:0, 4:2:0, 4:2:2, 4:4:0 and 4:4:4;
   BT.601/709/2020/SMPTE 240M/FCC and RGB (identity) matrices; limited and
